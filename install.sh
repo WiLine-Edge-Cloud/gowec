@@ -38,9 +38,9 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
 echo "Downloading gowec ($VERSION, $os/$arch)…"
-curl -fsSL "$files/$archive" -o "$tmp/$archive" ||
+curl -fsSL --retry 3 "$files/$archive" -o "$tmp/$archive" ||
 	fail "can't download $files/$archive"
-curl -fsSL "$files/checksums.txt" -o "$tmp/checksums.txt" ||
+curl -fsSL --retry 3 "$files/checksums.txt" -o "$tmp/checksums.txt" ||
 	fail "can't download $files/checksums.txt"
 
 want="$(grep " $archive\$" "$tmp/checksums.txt" | cut -d' ' -f1)"
