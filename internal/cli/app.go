@@ -183,7 +183,7 @@ func (r *run) waitJob(ctx context.Context, c *wec.Client, accepted *wec.JobAccep
 	if job.Status == "failed" {
 		code := ""
 		if job.ErrorCode != nil {
-			code = fmt.Sprintf(" (CloudStack error %d)", *job.ErrorCode)
+			code = fmt.Sprintf(" (WEC error %d)", *job.ErrorCode)
 		}
 		return fmt.Errorf("%s failed%s; the account's events have the details · job %s", doing, code, job.JobID)
 	}

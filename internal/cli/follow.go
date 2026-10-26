@@ -41,7 +41,7 @@ func jobCmd(r *run) *cobra.Command {
 				"job "+args[0]+" succeeded")
 		},
 	}
-	return group("job", "Background actions CloudStack carries out", []string{"jobs"}, get, wait)
+	return group("job", "Background actions WEC carries out", []string{"jobs"}, get, wait)
 }
 
 func jobPairs(job *wec.Job) string {
@@ -53,7 +53,7 @@ func jobPairs(job *wec.Job) string {
 		{"Created", dash(job.Created)},
 	}
 	if job.ErrorCode != nil {
-		pairs = append(pairs, [2]string{"Error", fmt.Sprintf("CloudStack error %d", *job.ErrorCode)})
+		pairs = append(pairs, [2]string{"Error", fmt.Sprintf("WEC error %d", *job.ErrorCode)})
 	}
 	return ui.Pairs(pairs)
 }

@@ -147,7 +147,7 @@ gowec <resource> <action> [target] [flags]
 gowec vm list                         # the instances table (below)
 gowec vm list --status stopped -q     # ids only
 gowec vm get web-1                    # everything about one VM
-gowec vm start web-1                  # waits until CloudStack is done
+gowec vm start web-1                  # waits until WEC is done
 gowec vm stop web-1 --force           # pull the plug
 gowec vm reboot web-1 -d              # detach: print the job id instead of waiting
 gowec vm resize web-1 --size wa-gnp-1.2c-4gb
@@ -305,7 +305,7 @@ gowec bundle list --zone princeton
 Long actions return an id. Commands wait by default; `-d` (`--detach`) prints the id instead. You can follow it later:
 
 ```bash
-gowec job wait <job-id>            # CloudStack actions: start, stop, attach, …
+gowec job wait <job-id>            # WEC actions: start, stop, attach, …
 gowec launch wait <launch-id>      # VM launches
 gowec upgrade wait <upgrade-id>    # plan upgrades
 ```
@@ -400,7 +400,7 @@ gowec vm create --name ci-runner --zone princeton --template "Ubuntu 24.04 LTS" 
 
 These come from the public API, not from gowec:
 
-- **VM snapshots aren't available yet.** The storage behind them doesn't support them, so the API answers `cloudstack_error`.
+- **VM snapshots aren't available yet.** The storage behind them doesn't support them yet, so WEC refuses them with an error.
 - **No quote for some paid actions.** `address allocate` and `backup enable` charge the wallet without a quote, so they only ask for confirmation.
 - **Offerings aren't listed.** `network create` and `vpc create` need a network or VPC offering id, and the public API doesn't list offerings.
 - **Prepaid data volumes can only be bought.** Resizing or removing one goes through the portal.

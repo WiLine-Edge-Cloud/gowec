@@ -211,7 +211,7 @@ func snapshotCreateCmd(r *run) *cobra.Command {
 			return r.waitJob(cmd.Context(), c, accepted, "Snapshotting "+args[0], args[0]+" is snapshotted")
 		},
 	}
-	cmd.Flags().StringVar(&name, "name", "", "the snapshot's name (CloudStack picks one otherwise)")
+	cmd.Flags().StringVar(&name, "name", "", "the snapshot's name (WEC picks one otherwise)")
 	return cmd
 }
 
