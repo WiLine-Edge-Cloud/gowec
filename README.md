@@ -25,6 +25,7 @@ It works two ways:
 - [Scripts and CI](#scripts-and-ci)
 - [Known limits](#known-limits)
 - [Development](#development)
+- [License](#license)
 
 ---
 
@@ -36,12 +37,14 @@ On macOS or Linux:
 curl -fsSL https://github.com/WiLine-Edge-Cloud/gowec/releases/latest/download/install.sh | sh
 ```
 
-The script downloads the latest build for your system, checks it against the release's checksums, and installs `gowec` in `/usr/local/bin` (or `~/.local/bin` when that isn't writable). It tells you if the folder isn't on your `PATH`. Run it again to update.
+The script downloads the latest build for your system, checks it against the release's checksums, and installs `gowec` in `/usr/local/bin` (or `~/.local/bin` when that isn't writable). It tells you if the folder isn't on your `PATH`.
 
 - **A specific version:** `curl -fsSL …/install.sh | GOWEC_VERSION=v0.1.0 sh`
 - **Another folder:** `GOWEC_INSTALL_DIR=~/bin`
 - **Windows:** download [gowec_windows_amd64.zip](https://github.com/WiLine-Edge-Cloud/gowec/releases/latest/download/gowec_windows_amd64.zip) and put `gowec.exe` on your `PATH`.
 - **From source,** with Go 1.27 or newer: `make build`, then put `bin/gowec` on your `PATH`.
+
+**Updating.** Run the same `curl … | sh` line again: it replaces `gowec` with the latest release. Your contexts and keys in `~/.config/gowec/` are kept. `gowec version` shows what you have, and the [releases page](https://github.com/WiLine-Edge-Cloud/gowec/releases) lists what changed in each version. On Windows, download the new zip and replace `gowec.exe`.
 
 For shell completion outside the console, add the script for your shell:
 
@@ -423,22 +426,55 @@ Paid commands spend real wallet money, so run them deliberately.
 
 gowec uses only the public API. A feature that needs something the API doesn't offer starts with a new API endpoint.
 
-### Releasing
+### Releasing a new version
 
-A tag releases. Tag the commit on `main` and push the tag:
+A pushed tag that starts with `v` publishes a release. The release workflow (`.github/workflows/release.yml`) runs vet and the tests, builds macOS, Linux and Windows with GoReleaser (`.goreleaser.yaml`), and publishes a GitHub Release with the archives, `checksums.txt`, `install.sh` and notes from the commits. Every push to `main` and every pull request runs vet, the tests and a check of the release config (`.github/workflows/ci.yml`).
 
-```bash
-git tag v0.1.0
-git push origin v0.1.0
-```
+1. **Land the changes on `main`** and wait for its `ci` run to pass.
 
-The release workflow (`.github/workflows/release.yml`) then:
-1. runs vet and the tests;
-2. builds macOS, Linux and Windows with GoReleaser (`.goreleaser.yaml`), with the tag as `gowec version`;
-3. publishes a GitHub Release with the archives, `checksums.txt`, `install.sh` and notes from the commits.
+   ```bash
+   git push origin main
+   ```
 
-`install.sh` reads `https://github.com/WiLine-Edge-Cloud/gowec/releases/latest/download/`, which always serves the newest full release. A tag with a suffix, such as `v0.2.0-rc1`, is marked as a pre-release and never becomes the latest; install it with `GOWEC_VERSION=v0.2.0-rc1`.
+2. **Pick the version.** Versions follow [semantic versioning](https://semver.org): `vMAJOR.MINOR.PATCH`.
+   - **Patch** (`v0.1.1`): fixes only.
+   - **Minor** (`v0.2.0`): new commands or flags.
+   - **Major** (`v1.0.0`): something that breaks existing scripts, such as a renamed command or flag, or a changed `-o json` shape. While gowec is `0.x`, a minor version may also break things; say so in the release notes.
 
-Every push to `main` and every pull request runs vet, the tests and a check of the release config (`.github/workflows/ci.yml`).
+   See the last one with `git describe --tags --abbrev=0`.
 
-To try a release without publishing it, run `make dist` and look in `dist/`.
+3. **Optional: try it as a pre-release.** A tag with a suffix is published as a pre-release and never becomes the one `install.sh` installs by default:
+
+   ```bash
+   git tag v0.2.0-rc1 && git push origin v0.2.0-rc1
+   curl -fsSL https://github.com/WiLine-Edge-Cloud/gowec/releases/download/v0.2.0-rc1/install.sh | GOWEC_VERSION=v0.2.0-rc1 sh
+   ```
+
+4. **Tag the commit on `main` and push the tag:**
+
+   ```bash
+   git checkout main && git pull
+   git tag v0.2.0
+   git push origin v0.2.0
+   ```
+
+5. **Watch it publish.** In the repo's **Actions** tab, the `release` run takes about two minutes. The [Releases page](https://github.com/WiLine-Edge-Cloud/gowec/releases) then shows `gowec v0.2.0` with seven files: five archives, `checksums.txt` and `install.sh`. Edit the generated notes there if they need a sentence for people.
+
+6. **Check the install** on a Mac or Linux machine:
+
+   ```bash
+   curl -fsSL https://github.com/WiLine-Edge-Cloud/gowec/releases/latest/download/install.sh | sh
+   gowec version
+   ```
+
+   A `504` right after publishing is GitHub still settling the new files; it clears within a few minutes.
+
+**If a release is broken,** don't move or re-push its tag: people may already have installed it. Fix the problem on `main` and release the next patch version. To stop new installs of the broken one in the meantime, delete its GitHub Release (keep the tag); `latest` then points back to the previous release.
+
+**Only maintainers can push `v*` tags** (a tag ruleset on the repo), because each one publishes a release that anyone can install.
+
+To try a release build without publishing anything, run `make dist` and look in `dist/`.
+
+## License
+
+gowec is released under the [MIT License](LICENSE).
