@@ -70,7 +70,11 @@ case ":$PATH:" in
 	*/zsh) rc="$HOME/.zshrc" ;;
 	*/bash) rc="$HOME/.bashrc" ;;
 	esac
-	echo "$dir isn't on your PATH yet. Add it, then open a new terminal and run gowec:"
-	echo "  echo 'export PATH=\"$dir:\$PATH\"' >> $rc"
+	# Shown with $HOME and ~ so the line can be copied as is.
+	show_dir="$dir"
+	case "$dir" in "$HOME"/*) show_dir="\$HOME${dir#"$HOME"}" ;; esac
+	show_rc="~${rc#"$HOME"}"
+	echo "$dir isn't on your PATH yet. Add it, then run gowec:"
+	echo "  echo 'export PATH=\"$show_dir:\$PATH\"' >> $show_rc && source $show_rc"
 	;;
 esac

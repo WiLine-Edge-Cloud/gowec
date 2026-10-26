@@ -39,6 +39,15 @@ curl -fsSL https://github.com/WiLine-Edge-Cloud/gowec/releases/latest/download/i
 
 The script downloads the latest build for your system, checks it against the release's checksums, and installs `gowec` in `/usr/local/bin` (or `~/.local/bin` when that isn't writable). It tells you if the folder isn't on your `PATH`.
 
+On most Macs it installs to `~/.local/bin`, which isn't on the `PATH` yet. Add it once, then check:
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
+gowec version
+```
+
+With bash, use `~/.bashrc` instead of `~/.zshrc`.
+
 - **A specific version:** `curl -fsSL …/install.sh | GOWEC_VERSION=v0.1.0 sh`
 - **Another folder:** `GOWEC_INSTALL_DIR=~/bin`
 - **Windows:** download [gowec_windows_amd64.zip](https://github.com/WiLine-Edge-Cloud/gowec/releases/latest/download/gowec_windows_amd64.zip) and put `gowec.exe` on your `PATH`.
