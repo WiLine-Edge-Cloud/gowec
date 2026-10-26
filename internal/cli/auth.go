@@ -11,9 +11,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"git.wiline.com/cloud/cloud-cli/internal/config"
-	"git.wiline.com/cloud/cloud-cli/internal/ui"
-	"git.wiline.com/cloud/cloud-cli/pkg/wec"
+	"github.com/WiLine-Edge-Cloud/gowec/internal/config"
+	"github.com/WiLine-Edge-Cloud/gowec/internal/ui"
+	"github.com/WiLine-Edge-Cloud/gowec/pkg/wec"
 )
 
 func authCmd(r *run) *cobra.Command {
@@ -31,7 +31,7 @@ func authLoginCmd(r *run) *cobra.Command {
 			"For scripts, pipe it in with --token-stdin, or skip the config and set\n" +
 			"GOWEC_TOKEN (and GOWEC_API_URL) instead.",
 		Example: "  gowec auth login\n" +
-			"  gowec auth login --context local --api-url http://localhost:5050\n" +
+			"  gowec auth login --context work\n" +
 			"  echo \"$WEC_KEY\" | gowec auth login --token-stdin",
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {

@@ -3,7 +3,7 @@ package cli
 import (
 	"github.com/spf13/cobra"
 
-	"git.wiline.com/cloud/cloud-cli/internal/ui"
+	"github.com/WiLine-Edge-Cloud/gowec/internal/ui"
 )
 
 func contextCmd(r *run) *cobra.Command {

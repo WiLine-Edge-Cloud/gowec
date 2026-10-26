@@ -1,4 +1,4 @@
-module git.wiline.com/cloud/cloud-cli
+module github.com/WiLine-Edge-Cloud/gowec
 
 go 1.27.2
 

@@ -7,10 +7,10 @@ import (
 	"os"
 	"os/signal"
 
-	"git.wiline.com/cloud/cloud-cli/internal/cli"
-	"git.wiline.com/cloud/cloud-cli/internal/config"
-	"git.wiline.com/cloud/cloud-cli/internal/shell"
-	"git.wiline.com/cloud/cloud-cli/internal/ui"
+	"github.com/WiLine-Edge-Cloud/gowec/internal/cli"
+	"github.com/WiLine-Edge-Cloud/gowec/internal/config"
+	"github.com/WiLine-Edge-Cloud/gowec/internal/shell"
+	"github.com/WiLine-Edge-Cloud/gowec/internal/ui"
 )
 
 // version is set at build time: -ldflags "-X main.version=1.2.3".

@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"git.wiline.com/cloud/cloud-cli/internal/ui"
+	"github.com/WiLine-Edge-Cloud/gowec/internal/ui"
 )
 
 // renderHelp is gowec's help screen: the name and what it does, how to call

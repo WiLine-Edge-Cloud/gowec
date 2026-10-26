@@ -1,0 +1,55 @@
+# Release builds of gowec. The release workflow runs `goreleaser release --clean`
+# on a v* tag and publishes a GitHub Release with the archives, checksums.txt
+# and install.sh. Archive names carry no version, so install.sh can always
+# fetch releases/latest/download/gowec_<os>_<arch>.tar.gz.
+#
+# Dry run locally: make dist (builds into dist/, publishes nothing).
+version: 2
+project_name: gowec
+
+builds:
+  - main: ./cmd/gowec
+    binary: gowec
+    env: [CGO_ENABLED=0]
+    flags: [-trimpath]
+    ldflags: ["-s -w -X main.version={{ .Tag }}"]
+    goos: [darwin, linux, windows]
+    goarch: [amd64, arm64]
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - name_template: "gowec_{{ .Os }}_{{ .Arch }}"
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files: [README.md]
+
+checksum:
+  name_template: checksums.txt
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-dev"
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude: ["^docs", "^test", "^chore"]
+
+release:
+  github:
+    owner: WiLine-Edge-Cloud
+    name: gowec
+  name_template: "gowec {{ .Tag }}"
+  prerelease: auto
+  extra_files:
+    - glob: ./install.sh
+  footer: |
+    Install or update on macOS and Linux:
+
+        curl -fsSL https://github.com/WiLine-Edge-Cloud/gowec/releases/latest/download/install.sh | sh
+
+    On Windows, download gowec_windows_amd64.zip and put gowec.exe on your PATH.

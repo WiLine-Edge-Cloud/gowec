@@ -16,9 +16,9 @@ import (
 	"github.com/ergochat/readline"
 	"github.com/google/shlex"
 
-	"git.wiline.com/cloud/cloud-cli/internal/cli"
-	"git.wiline.com/cloud/cloud-cli/internal/config"
-	"git.wiline.com/cloud/cloud-cli/internal/ui"
+	"github.com/WiLine-Edge-Cloud/gowec/internal/cli"
+	"github.com/WiLine-Edge-Cloud/gowec/internal/config"
+	"github.com/WiLine-Edge-Cloud/gowec/internal/ui"
 )
 
 // Run opens the console and returns the exit code when the person leaves.

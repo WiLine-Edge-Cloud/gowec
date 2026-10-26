@@ -6,7 +6,7 @@ guidelines and platform context.
 
 ## Stack
 
-Go (module `git.wiline.com/cloud/cloud-cli`). The Go toolchain is installed on
+Go (module `github.com/WiLine-Edge-Cloud/gowec`). The Go toolchain is installed on
 the host with Homebrew, so unlike the Python backends nothing runs in Docker.
 
 Libraries:
@@ -24,7 +24,9 @@ There is no Viper and no code generation.
 | `make build` | Builds `bin/gowec`. The version comes from `git describe` and is set with `-X main.version`. |
 | `make test` | Runs `go test ./...`. Only `pkg/wec` has tests. |
 | `make vet` | Runs `go vet ./...`. |
-| `make dist` | Cross-compiles to `dist/` for darwin, linux and windows. |
+| `make dist` | A GoReleaser snapshot build of every platform into `dist/`; publishes nothing. |
+
+**Releases:** a pushed `v*` tag runs `.github/workflows/release.yml`: GoReleaser builds every platform and publishes a GitHub Release (archives, `checksums.txt`, `install.sh`) with the workflow's own `GITHUB_TOKEN`, so no secrets are stored. Archive names carry no version, so `install.sh` always fetches `releases/latest/download/gowec_<os>_<arch>.tar.gz`; a suffixed tag (`v0.2.0-rc1`) is a pre-release and never becomes latest. The repo is public (`github.com/WiLine-Edge-Cloud/gowec`): keep internal hosts, people and secrets out of it. README → Releasing has the steps.
 
 ## Layout
 
@@ -77,4 +79,4 @@ There is no Viper and no code generation.
   1. Log in against the local backend: `gowec auth login --context local --api-url http://localhost:5050`. Use a key from the local portal's Settings → API access; it is a `wec_test_…` key.
   2. Run read-only commands.
   3. Run the shell through a TTY.
-- **Money flows:** `vm create` and `plan delete-now` move real money on the shared prepaid billing engine. Ask Carlos before running them live.
+- **Money flows:** `vm create` and `plan delete-now` move real money on the shared prepaid billing engine. Ask a maintainer before running them live.

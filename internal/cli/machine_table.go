@@ -13,8 +13,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"golang.org/x/term"
 
-	"git.wiline.com/cloud/cloud-cli/internal/ui"
-	"git.wiline.com/cloud/cloud-cli/pkg/wec"
+	"github.com/WiLine-Edge-Cloud/gowec/internal/ui"
+	"github.com/WiLine-Edge-Cloud/gowec/pkg/wec"
 )
 
 // machineView is a machine with what the instances table joins onto it:

@@ -1,6 +1,5 @@
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS := -s -w -X main.version=$(VERSION)
-PLATFORMS := darwin/arm64 darwin/amd64 linux/amd64 linux/arm64 windows/amd64
 
 .PHONY: build test vet dist clean
 
@@ -13,13 +12,10 @@ test:
 vet:
 	go vet ./...
 
+# A release build of every platform into dist/, the way CI makes it
+# (.goreleaser.yaml); publishes nothing.
 dist:
-	@for p in $(PLATFORMS); do \
-		os=$${p%/*}; arch=$${p#*/}; ext=; [ $$os = windows ] && ext=.exe; \
-		echo "dist/gowec_$${os}_$${arch}$$ext"; \
-		GOOS=$$os GOARCH=$$arch CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" \
-			-o dist/gowec_$${os}_$${arch}$$ext ./cmd/gowec || exit 1; \
-	done
+	goreleaser release --snapshot --clean
 
 clean:
 	rm -rf bin dist

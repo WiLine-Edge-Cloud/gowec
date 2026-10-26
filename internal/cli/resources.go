@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"git.wiline.com/cloud/cloud-cli/internal/ui"
-	"git.wiline.com/cloud/cloud-cli/pkg/wec"
+	"github.com/WiLine-Edge-Cloud/gowec/internal/ui"
+	"github.com/WiLine-Edge-Cloud/gowec/pkg/wec"
 )
 
 // listCmd builds a "list" action: fetch, then show as a table, JSON or ids.

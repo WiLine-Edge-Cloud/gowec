@@ -1,0 +1,29 @@
+# A pushed v* tag builds every platform and publishes a GitHub Release with the
+# archives, checksums.txt and install.sh (.goreleaser.yaml). Tags with a
+# suffix (v0.2.0-rc1) are marked pre-release and never become "latest".
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write # create the release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # GoReleaser reads the tags
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - run: go vet ./... && go test ./...
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

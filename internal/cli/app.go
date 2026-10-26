@@ -20,9 +20,9 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"git.wiline.com/cloud/cloud-cli/internal/config"
-	"git.wiline.com/cloud/cloud-cli/internal/ui"
-	"git.wiline.com/cloud/cloud-cli/pkg/wec"
+	"github.com/WiLine-Edge-Cloud/gowec/internal/config"
+	"github.com/WiLine-Edge-Cloud/gowec/internal/ui"
+	"github.com/WiLine-Edge-Cloud/gowec/pkg/wec"
 )
 
 // App is what lives across commands: the config, how to ask questions, and

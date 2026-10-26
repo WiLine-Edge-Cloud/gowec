@@ -8,9 +8,8 @@ It works two ways:
 - **Interactive console:** run `gowec` alone.
 - **One-shot commands:** `gowec vm start web-1`, for scripts and CI.
 
-> **Prepaid only.** The public API is only served by the prepaid deployment.
-> The postpaid line (development → staging → production) doesn't serve it yet,
-> so gowec can't be used against it.
+> **Prepaid accounts.** gowec works with prepaid WEC accounts, through the public
+> API at `https://prepaid-cloudapi.wiline.com`.
 
 ---
 
@@ -31,14 +30,18 @@ It works two ways:
 
 ## Install
 
-There are no downloads yet. Build it from source with Go 1.27 or newer:
+On macOS or Linux:
 
 ```bash
-make build            # bin/gowec
-make dist             # dist/gowec_<os>_<arch>: macOS, Linux and Windows, Intel and Arm
+curl -fsSL https://github.com/WiLine-Edge-Cloud/gowec/releases/latest/download/install.sh | sh
 ```
 
-Put `bin/gowec` on your `PATH`.
+The script downloads the latest build for your system, checks it against the release's checksums, and installs `gowec` in `/usr/local/bin` (or `~/.local/bin` when that isn't writable). It tells you if the folder isn't on your `PATH`. Run it again to update.
+
+- **A specific version:** `curl -fsSL …/install.sh | GOWEC_VERSION=v0.1.0 sh`
+- **Another folder:** `GOWEC_INSTALL_DIR=~/bin`
+- **Windows:** download [gowec_windows_amd64.zip](https://github.com/WiLine-Edge-Cloud/gowec/releases/latest/download/gowec_windows_amd64.zip) and put `gowec.exe` on your `PATH`.
+- **From source,** with Go 1.27 or newer: `make build`, then put `bin/gowec` on your `PATH`.
 
 For shell completion outside the console, add the script for your shell:
 
@@ -55,7 +58,7 @@ gowec completion zsh > "${fpath[1]}/_gowec"      # bash, fish and powershell wor
 
 ```bash
 gowec auth login                                   # asks for the key (hidden); context "default"
-gowec auth login --context local --api-url http://localhost:5050
+gowec auth login --context work                    # a second account, saved separately
 echo "$WEC_KEY" | gowec auth login --token-stdin   # no prompt
 gowec auth status                                  # account, permissions, guards, expiry
 gowec auth logout                                  # forget the saved key (it stays valid)
@@ -373,7 +376,7 @@ gowec vm create --name ci-runner --zone princeton --template "Ubuntu 24.04 LTS" 
 
 These come from the public API, not from gowec:
 
-- **VM snapshots fail on staging.** Its storage doesn't support them, and CloudStack answers `cloudstack_error`.
+- **VM snapshots aren't available yet.** The storage behind them doesn't support them, so the API answers `cloudstack_error`.
 - **No quote for some paid actions.** `address allocate` and `backup enable` charge the wallet without a quote, so they only ask for confirmation.
 - **Offerings aren't listed.** `network create` and `vpc create` need a network or VPC offering id, and the public API doesn't list offerings.
 - **Prepaid data volumes can only be bought.** Resizing or removing one goes through the portal.
@@ -395,7 +398,7 @@ These come from the public API, not from gowec:
 make build    # bin/gowec
 make test     # go test ./...
 make vet
-make dist     # cross-compiled binaries in dist/
+make dist     # a release build of every platform in dist/ (needs goreleaser); uploads nothing
 ```
 
 **Adding a command:**
@@ -408,23 +411,34 @@ make dist     # cross-compiled binaries in dist/
    - `r.completeNames` for tab completion;
    - `ui.Table`, `ui.RowTable` and `ui.Pairs` for tables and detail views.
 3. Follow the rules in [Spending and deleting](#spending-and-deleting) for anything that charges or destroys.
-4. Check it against the local backend before testing anything that charges.
+4. Try it on a test account before anything that charges.
 
-**Tests are kept small.** Only the money logic has unit tests: idempotent retries, the error shape, quote totals, upgrade pricing. Check everything else in the running app, against the local backend:
+**Tests are kept small.** Only the money logic has unit tests: idempotent retries, the error shape, quote totals, upgrade pricing. Check everything else in the running app. `--api-url` points a context at another API host, such as a local server:
 
 ```bash
-gowec auth login --context local --api-url http://localhost:5050
+gowec auth login --context dev --api-url http://localhost:5050
 ```
 
-Paid commands move real money on the shared prepaid billing engine, so run them deliberately.
+Paid commands spend real wallet money, so run them deliberately.
 
-**Backend routes added for gowec** (`cloudstack-integration`, branch `pre-paid`):
+gowec uses only the public API. A feature that needs something the API doesn't offer starts with a new API endpoint.
 
-| Route | What it's for |
-|---|---|
-| `GET /whoami` | Checks a key; used at login and for the console's status line |
-| `GET /usage/machines?ids=` | The Usage 24h column |
-| `GET /volumes/quote` | Quoting a volume plan before buying it |
-| `os_name`, `cpu_speed_mhz`, `root_disk_gb` on machines | The Resources column |
+### Releasing
 
-A gowec feature that needs a new public route goes into that repo first.
+A tag releases. Tag the commit on `main` and push the tag:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The release workflow (`.github/workflows/release.yml`) then:
+1. runs vet and the tests;
+2. builds macOS, Linux and Windows with GoReleaser (`.goreleaser.yaml`), with the tag as `gowec version`;
+3. publishes a GitHub Release with the archives, `checksums.txt`, `install.sh` and notes from the commits.
+
+`install.sh` reads `https://github.com/WiLine-Edge-Cloud/gowec/releases/latest/download/`, which always serves the newest full release. A tag with a suffix, such as `v0.2.0-rc1`, is marked as a pre-release and never becomes the latest; install it with `GOWEC_VERSION=v0.2.0-rc1`.
+
+Every push to `main` and every pull request runs vet, the tests and a check of the release config (`.github/workflows/ci.yml`).
+
+To try a release without publishing it, run `make dist` and look in `dist/`.
