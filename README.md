@@ -54,10 +54,22 @@ gowec completion zsh > "${fpath[1]}/_gowec"      # bash, fish and powershell wor
 
 ## Log in
 
-1. **Create a key** in the portal: **Settings → API access**.
-   - The key is shown once.
-   - It acts as you, limited to the permissions you give it. Spending from the wallet and deleting each need their own switch on the key.
-2. **Save it.** gowec checks the key against the API before saving it.
+1. **Open API keys** in the WEC portal: **Settings → API access**, then **Create key**.
+
+   <img src="docs/images/api-keys.png" alt="The API keys page in the WEC portal, with the Create key button at the top right" width="760">
+
+2. **Choose what the key can do.**
+   - **Name:** something you'll recognise later, such as "gowec on my laptop".
+   - **What it can do:** **Read only** lets gowec look but not change anything. To start, stop or create things, set **Manage** on those areas, or pick **Full access**.
+   - **Money and deletes:** turn on **Can spend from the wallet** for commands that charge, such as `vm create`, `plan upgrade` and `plan addon add`. Turn on **Can delete resources** for `delete` and `release` commands. Both need **Manage** on at least one area.
+   - **Expires:** 30 days, 90 days, 1 year or a date. Create a new key before it runs out.
+
+   <img src="docs/images/create-api-key.png" alt="The Create an API key dialog: name, what it can do per area, money and deletes, and expiry" width="420">
+
+   The key acts as you and can never do more than you can. It stops working if you leave the team.
+
+3. **Copy the key.** It's shown once, and it starts with `wec_`.
+4. **Save it in gowec.** gowec checks the key against the API before saving it.
 
 ```bash
 gowec auth login                                   # asks for the key (hidden); context "default"
