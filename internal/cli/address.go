@@ -50,7 +50,7 @@ func addressAllocateCmd(r *run) *cobra.Command {
 		Short:   "Take a new public address in a VPC (it may charge the wallet)",
 		Long: "Take a new public address in a VPC. On prepaid, a month of it is charged to the\n" +
 			"wallet unless the VM's plan already includes one; an address must be for a\n" +
-			"VM. It asks first; in scripts, pass --yes.",
+			"VM. gowec prices it first and asks; in scripts, pass --yes.",
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			c, err := r.client()
@@ -70,7 +70,14 @@ func addressAllocateCmd(r *run) *cobra.Command {
 				}
 				machineID, forName = m.ID, " for "+m.Name
 			}
-			question := fmt.Sprintf("Allocate a public address in %s%s? It may charge a month of it to the wallet.", v.Name, forName)
+			spin := ui.StartSpinner(r.app.Err, r.tty(), "Pricing…")
+			quote, err := c.QuoteAddress(ctx, v.ID, machineID)
+			spin.Stop()
+			if err != nil {
+				r.planAddonHint(err, machine, "address", "public address is")
+				return err
+			}
+			question := fmt.Sprintf("Allocate a public address in %s%s?%s", v.Name, forName, chargeNote(quote))
 			if err := r.confirm(question, "allocating can charge the wallet"); err != nil {
 				return err
 			}
@@ -83,7 +90,7 @@ func addressAllocateCmd(r *run) *cobra.Command {
 				return r.waitNet(ctx, c, accepted, "Allocating an address in "+v.Name, "Allocated an address in "+v.Name)
 			}
 			// Followed here rather than with waitJob, to show the new IP.
-			spin := ui.StartSpinner(r.app.Err, r.tty(), "Allocating an address in "+v.Name+"…")
+			spin = ui.StartSpinner(r.app.Err, r.tty(), "Allocating an address in "+v.Name+"…")
 			job, err := c.WaitJob(ctx, accepted.JobID, nil)
 			spin.Stop()
 			if err != nil {

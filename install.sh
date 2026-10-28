@@ -3,9 +3,11 @@
 #
 #   curl -fsSL https://github.com/WiLine-Edge-Cloud/gowec/releases/latest/download/install.sh | sh
 #
-# GOWEC_VERSION=v0.1.0 installs that release instead of the latest one, and
-# GOWEC_INSTALL_DIR picks the folder (default /usr/local/bin when writable,
-# else ~/.local/bin). Running it again updates gowec in place.
+# It asks where to install (default /usr/local/bin, using sudo when that needs
+# administrator rights). GOWEC_INSTALL_DIR answers that ahead of time, and
+# GOWEC_VERSION=v0.1.0 installs that release instead of the latest one. With
+# no terminal (CI) it uses /usr/local/bin if writable, else ~/.local/bin.
+# Running it again updates gowec in place.
 set -eu
 
 BASE_URL="${GOWEC_BASE_URL:-https://github.com/WiLine-Edge-Cloud/gowec/releases}"
@@ -54,12 +56,32 @@ fi
 
 tar -xzf "$tmp/$archive" -C "$tmp" gowec
 
+default=/usr/local/bin
 dir="${GOWEC_INSTALL_DIR:-}"
 if [ -z "$dir" ]; then
-	if [ -w /usr/local/bin ]; then dir=/usr/local/bin; else dir="$HOME/.local/bin"; fi
+	# With curl | sh the script arrives on stdin, so the question goes to the terminal.
+	if { : </dev/tty; } 2>/dev/null; then
+		printf "Install gowec in [%s]: " "$default" >/dev/tty
+		read -r answer </dev/tty || answer=""
+		dir="${answer:-$default}"
+	elif [ -w "$default" ]; then
+		dir="$default"
+	else
+		dir="$HOME/.local/bin"
+	fi
 fi
-mkdir -p "$dir"
-install -m 0755 "$tmp/gowec" "$dir/gowec"
+case "$dir" in "~"*) dir="$HOME${dir#\~}" ;; esac
+
+# A folder you can't write to (like /usr/local/bin on most Macs) is written with sudo.
+sudo=""
+if ! { mkdir -p "$dir" && [ -w "$dir" ]; } 2>/dev/null; then
+	command -v sudo >/dev/null 2>&1 ||
+		fail "can't write to $dir; run again with GOWEC_INSTALL_DIR=\$HOME/.local/bin"
+	echo "Writing to $dir needs administrator rights; sudo may ask for your password."
+	sudo=sudo
+	$sudo mkdir -p "$dir"
+fi
+$sudo install -m 0755 "$tmp/gowec" "$dir/gowec"
 
 echo "Installed $("$dir/gowec" version) in $dir"
 case ":$PATH:" in

@@ -37,19 +37,25 @@ On macOS or Linux:
 curl -fsSL https://github.com/WiLine-Edge-Cloud/gowec/releases/latest/download/install.sh | sh
 ```
 
-The script downloads the latest build for your system, checks it against the release's checksums, and installs `gowec` in `/usr/local/bin` (or `~/.local/bin` when that isn't writable). It tells you if the folder isn't on your `PATH`.
+The script downloads the latest build for your system, checks it against the release's checksums, and asks where to install it:
 
-On most Macs it installs to `~/.local/bin`, which isn't on the `PATH` yet. Add it once, then check:
-
-```bash
-echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
-gowec version
+```
+Install gowec in [/usr/local/bin]:
 ```
 
-With bash, use `~/.bashrc` instead of `~/.zshrc`.
+- **Press Enter** for `/usr/local/bin`. It's already on your `PATH`, so `gowec` works straight away. On most Macs that folder needs administrator rights, so `sudo` asks for your password.
+- **Type another folder** to install without a password, such as `~/.local/bin`. If it isn't on your `PATH`, the script prints the line that adds it:
+
+  ```bash
+  echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
+  ```
+
+  With bash, use `~/.bashrc` instead of `~/.zshrc`.
+
+Then check it runs with `gowec version`.
 
 - **A specific version:** `curl -fsSL …/install.sh | GOWEC_VERSION=v0.1.0 sh`
-- **Another folder:** `GOWEC_INSTALL_DIR=~/bin`
+- **No question** (scripts and CI): `curl -fsSL …/install.sh | GOWEC_INSTALL_DIR=~/bin sh`. Without a terminal it doesn't ask: it uses `/usr/local/bin` when writable, else `~/.local/bin`.
 - **Windows:** download [gowec_windows_amd64.zip](https://github.com/WiLine-Edge-Cloud/gowec/releases/latest/download/gowec_windows_amd64.zip) and put `gowec.exe` on your `PATH`.
 - **From source,** with Go 1.27 or newer: `make build`, then put `bin/gowec` on your `PATH`.
 
@@ -247,6 +253,9 @@ gowec vpc list                                # with its networks and source NAT
 gowec vpc get prod
 gowec network list --vpc prod
 gowec network rules Default-Subnet
+gowec network offering list                   # the kinds of network --offering takes
+gowec vpc offering list
+gowec vpc create --name prod --zone princeton --cidr 10.1.0.0/16 --offering "Default VPC offering"
 gowec address list
 gowec address allocate --vpc prod --vm web-1
 gowec address attach 203.0.113.10 --vm web-1     # static NAT
@@ -322,6 +331,8 @@ Every command that charges the wallet or destroys something asks first.
 - `plan upgrade`
 - `plan addon add`
 
+`address allocate` and `backup enable` also price the charge before asking: the question says what the wallet is charged for the first month, or that the VM's plan already includes it.
+
 ```
 VM       web-2
 Size     wa-gnp-1.1c-0.5gb
@@ -333,8 +344,7 @@ Total    $29.28  ($2.44 a month)
 
 **Other paid or destructive commands ask without a quote:**
 - deletes, releases, restores and reverts;
-- `vm resize`;
-- `address allocate` and `backup enable`.
+- `vm resize`.
 
 **Without a terminal, gowec never guesses.** Every one of these refuses unless you pass `--yes`.
 
@@ -401,10 +411,7 @@ gowec vm create --name ci-runner --zone princeton --template "Ubuntu 24.04 LTS" 
 These come from the public API, not from gowec:
 
 - **VM snapshots aren't available yet.** The storage behind them doesn't support them yet, so WEC refuses them with an error.
-- **No quote for some paid actions.** `address allocate` and `backup enable` charge the wallet without a quote, so they only ask for confirmation.
-- **Offerings aren't listed.** `network create` and `vpc create` need a network or VPC offering id, and the public API doesn't list offerings.
 - **Prepaid data volumes can only be bought.** Resizing or removing one goes through the portal.
-- **Upgrade prices are calculated by gowec.** The API has no upgrade quote, so gowec works out the price the same way the server does. If the two ever disagree, the API refuses and nothing is charged.
 - **`price list` shows the raw billing figures** for sizes only. Add-on prices appear in `plan addon quote` and `bundle list`.
 
 ## Development
@@ -437,7 +444,7 @@ make dist     # a release build of every platform in dist/ (needs goreleaser); u
 3. Follow the rules in [Spending and deleting](#spending-and-deleting) for anything that charges or destroys.
 4. Try it on a test account before anything that charges.
 
-**Tests are kept small.** Only the money logic has unit tests: idempotent retries, the error shape, quote totals, upgrade pricing. Check everything else in the running app. `--api-url` points a context at another API host, such as a local server:
+**Tests are kept small.** Only the money logic has unit tests: idempotent retries, the error shape, quote totals. Prices themselves come from the API's quotes. Check everything else in the running app. `--api-url` points a context at another API host, such as a local server:
 
 ```bash
 gowec auth login --context dev --api-url http://localhost:5050

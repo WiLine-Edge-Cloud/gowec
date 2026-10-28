@@ -72,7 +72,7 @@ There is no Viper and no code generation.
 
 ## Testing
 
-- **Go tests:** keep them few, and only for money logic. `pkg/wec/client_test.go` covers idempotent retries, error parsing and the quote total; `pkg/wec/billing_test.go` covers upgrade pricing.
+- **Go tests:** keep them few, and only for money logic. `pkg/wec/client_test.go` covers idempotent retries, error parsing and the quote total. Prices come from the API's quotes (`/plans/quote`, `/plans/{id}/upgrade/quote`, `/addresses/quote`, `/machines/{id}/backup-offering/quote`, …); don't re-implement price rules in the client.
 - **Schedules:** CloudStack stores them minutes first (`MM:HH`). The CLI takes `--at HH:MM` / `--day` and converts (`storageWhen` in `snapshot.go`).
 - **Retries:** the SDK retries a 5xx only when it may pass (503, 504, or a non-API error page). Retrying the API's own 500/502 just repeats the failure in the request log.
 - **Manual checks:**

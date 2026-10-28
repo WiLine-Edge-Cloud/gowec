@@ -22,16 +22,17 @@ const (
 
 // hints add what to do next to the API's own message.
 var hints = map[string]string{
-	"missing_key":          "run gowec auth login",
-	"invalid_key":          "the key was not recognised; run gowec auth login with a current key",
-	"key_revoked":          "create a new key in Settings → API access, then gowec auth login",
-	"key_expired":          "create a new key in Settings → API access, then gowec auth login",
-	"wrong_environment":    "this key is for another WEC environment; check gowec context list",
-	"insufficient_scope":   "the key lacks this permission; an owner can create one that has it",
-	"spend_not_allowed":    "the key can't spend from the wallet; create one with Can spend",
-	"delete_not_allowed":   "the key can't delete; create one with Can delete",
-	"launch_price_changed": "the price moved since the quote; run the command again to see the new one",
-	"rate_limited":         "too many requests for this key; wait a moment",
+	"missing_key":                   "run gowec auth login",
+	"invalid_key":                   "the key was not recognised; run gowec auth login with a current key",
+	"key_revoked":                   "create a new key in Settings → API access, then gowec auth login",
+	"key_expired":                   "create a new key in Settings → API access, then gowec auth login",
+	"wrong_environment":             "this key is for another WEC environment; check gowec context list",
+	"insufficient_scope":            "the key lacks this permission; an owner can create one that has it",
+	"spend_not_allowed":             "the key can't spend from the wallet; create one with Can spend",
+	"prepaid_address_needs_machine": "on prepaid an address is for a VM: pass --vm <vm>",
+	"delete_not_allowed":            "the key can't delete; create one with Can delete",
+	"launch_price_changed":          "the price moved since the quote; run the command again to see the new one",
+	"rate_limited":                  "too many requests for this key; wait a moment",
 }
 
 // HandleError prints err for a person and returns the exit code it means.

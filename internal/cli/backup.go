@@ -96,7 +96,7 @@ func backupCreateCmd(r *run) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "create <vm>",
 		Aliases:           []string{"new", "take"},
-		Short:             "Back a VM up now (a VM keeps 2 backups)",
+		Short:             "Back a VM up now (a VM keeps one taken by hand; schedules keep their own)",
 		Args:              cobra.ExactArgs(1),
 		ValidArgsFunction: machineArg(r),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -202,7 +202,7 @@ func backupEnableCmd(r *run) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "enable <vm> [--offering <offering>]",
 		Aliases:           []string{"on"},
-		Short:             "Turn a VM's backups on (prepaid: charges the wallet a month of backups)",
+		Short:             "Turn a VM's backups on (prepaid: charges the wallet a month of backups, priced first)",
 		Args:              cobra.ExactArgs(1),
 		ValidArgsFunction: machineArg(r),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -218,16 +218,20 @@ func backupEnableCmd(r *run) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if err := r.confirm(fmt.Sprintf("Turn backups on for %s (%s)? On prepaid it charges the wallet.", m.Name, o.Name),
+			spin := ui.StartSpinner(r.app.Err, r.tty(), "Pricing…")
+			quote, err := c.QuoteBackups(cmd.Context(), m.ID)
+			spin.Stop()
+			if err != nil {
+				r.planAddonHint(err, m.Name, "backups", "backups are")
+				return err
+			}
+			if err := r.confirm(fmt.Sprintf("Turn backups on for %s (%s)?%s", m.Name, o.Name, chargeNote(quote)),
 				"turning backups on can charge the wallet"); err != nil {
 				return err
 			}
 			accepted, err := c.EnableBackups(cmd.Context(), m.ID, o.ID, r.idempotencyKey())
-			if wec.IsCode(err, "use_plan_addon") {
-				fmt.Fprintln(r.app.Err, ui.Warn(m.Name+" runs on a plan, so its backups are an add-on of the plan."))
-				fmt.Fprintln(r.app.Err, "  "+ui.Accent.Render("→ ")+r.app.Refs("gowec plan addon add "+m.Name+" backups"))
-			}
 			if err != nil {
+				r.planAddonHint(err, m.Name, "backups", "backups are")
 				return err
 			}
 			return r.waitJob(cmd.Context(), c, accepted, "Turning backups on for "+m.Name, m.Name+" is backed up on "+o.Name)

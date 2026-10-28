@@ -17,7 +17,35 @@ import (
 func networkCmd(r *run) *cobra.Command {
 	return group("network", "Networks (subnets)", []string{"networks", "net", "subnet", "subnets"},
 		networkListCmd(r), networkGetCmd(r), networkCreateCmd(r), networkRenameCmd(r),
-		networkRestartCmd(r), networkDeleteCmd(r), networkRulesCmd(r))
+		networkRestartCmd(r), networkDeleteCmd(r), networkRulesCmd(r), networkOfferingCmd(r))
+}
+
+func networkOfferingCmd(r *run) *cobra.Command {
+	list := listCmd(r, "List the kinds of network you can create",
+		func(cmd *cobra.Command, c *wec.Client) ([]wec.Offering, error) {
+			return c.ListNetworkOfferings(cmd.Context(), "")
+		},
+		[]string{"NAME", "FOR", "ID"},
+		func(o wec.Offering) []string {
+			kind := "networks of their own"
+			if o.ForVPC != nil && *o.ForVPC {
+				kind = "VPC tiers"
+			}
+			return []string{o.Name, kind, ui.Dim.Render(o.ID)}
+		},
+		func(o wec.Offering) string { return o.ID })
+	return group("offering", "Kinds of network you can create", []string{"offerings"}, list)
+}
+
+func offeringNames(list func(context.Context, string) ([]wec.Offering, error)) NameLister {
+	return func(ctx context.Context, _ *wec.Client) ([]string, error) {
+		offerings, err := list(ctx, "")
+		names := make([]string, len(offerings))
+		for i, o := range offerings {
+			names[i] = o.Name
+		}
+		return names, err
+	}
 }
 
 func networkArg(r *run) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
@@ -142,13 +170,13 @@ func networkGetCmd(r *run) *cobra.Command {
 
 func networkCreateCmd(r *run) *cobra.Command {
 	var body wec.CreateNetwork
-	var vpc, zone, cidr, acl string
+	var vpc, zone, cidr, acl, offering string
 	cmd := &cobra.Command{
-		Use:     "create --name <name> --vpc <vpc> --cidr <cidr> --offering <id>",
+		Use:     "create --name <name> --vpc <vpc> --cidr <cidr> --offering <offering>",
 		Aliases: []string{"new"},
 		Short:   "Create a network, as a tier of a VPC or on its own",
 		Example: "  gowec network create --name web --vpc prod --cidr 10.1.1.0/24 --acl default_allow \\\n" +
-			"    --offering <network-offering-id>",
+			"    --offering <offering>     # gowec network offering list",
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			c, err := r.client()
@@ -176,6 +204,9 @@ func networkCreateCmd(r *run) *cobra.Command {
 					return err
 				}
 			}
+			if body.NetworkOfferingID, err = c.ResolveNetworkOffering(ctx, offering); err != nil {
+				return err
+			}
 			if acl != "" {
 				a, err := c.FindNetworkACL(ctx, acl)
 				if err != nil {
@@ -197,12 +228,19 @@ func networkCreateCmd(r *run) *cobra.Command {
 	f.StringVar(&zone, "zone", "", "zone name or id (defaults to the VPC's)")
 	f.StringVar(&cidr, "cidr", "", "the tier's range inside the VPC's, e.g. 10.1.1.0/24; its first address is the gateway")
 	f.StringVar(&acl, "acl", "", "the network ACL it uses (name or id, gowec firewall acl list)")
-	f.StringVar(&body.NetworkOfferingID, "offering", "", "the network offering's id")
+	f.StringVar(&offering, "offering", "", "the kind of network, name or id (gowec network offering list)")
 	f.StringVar(&body.DisplayText, "description", "", "a description")
 	_ = cmd.MarkFlagRequired("name")
 	_ = cmd.MarkFlagRequired("offering")
 	netCompleteFlag(r, cmd, "vpc", "vpc", listVPCNames)
 	netCompleteFlag(r, cmd, "acl", "acl", listACLNames)
+	_ = cmd.RegisterFlagCompletionFunc("offering", func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+		c, err := r.client()
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		return r.app.cachedNames(r, "network-offering", offeringNames(c.ListNetworkOfferings)), cobra.ShellCompDirectiveNoFileComp
+	})
 	return cmd
 }
 

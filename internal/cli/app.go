@@ -246,6 +246,27 @@ func dash(s string) string {
 	return s
 }
 
+// chargeNote finishes a confirmation question with what the call charges,
+// from the API's quote for it.
+func chargeNote(q *wec.MonthQuote) string {
+	switch {
+	case q.CoveredByPlan:
+		return " Its plan already includes it: nothing is charged."
+	case q.Due > 0:
+		return " It charges " + money(q.Due, "") + " to the wallet (a month)."
+	}
+	return ""
+}
+
+// planAddonHint points at the plan add-on when the API answers that a plan
+// VM buys this as part of its plan.
+func (r *run) planAddonHint(err error, machine, kind, what string) {
+	if wec.IsCode(err, "use_plan_addon") {
+		fmt.Fprintln(r.app.Err, ui.Warn(machine+" runs on a plan, so its "+what+" an add-on of the plan."))
+		fmt.Fprintln(r.app.Err, "  "+ui.Accent.Render("→ ")+r.app.Refs("gowec plan addon add "+machine+" "+kind))
+	}
+}
+
 func money(v float64, currency string) string {
 	if currency == "" || strings.EqualFold(currency, "USD") {
 		return fmt.Sprintf("$%.2f", v)

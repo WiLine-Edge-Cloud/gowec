@@ -14,7 +14,18 @@ import (
 func vpcCmd(r *run) *cobra.Command {
 	return group("vpc", "Virtual private clouds", []string{"vpcs"},
 		vpcListCmd(r), vpcGetCmd(r), vpcCreateCmd(r), vpcRenameCmd(r), vpcRestartCmd(r),
-		vpcSourceNATCmd(r), vpcDeleteCmd(r))
+		vpcSourceNATCmd(r), vpcDeleteCmd(r), vpcOfferingCmd(r))
+}
+
+func vpcOfferingCmd(r *run) *cobra.Command {
+	list := listCmd(r, "List the kinds of VPC you can create",
+		func(cmd *cobra.Command, c *wec.Client) ([]wec.Offering, error) {
+			return c.ListVPCOfferings(cmd.Context(), "")
+		},
+		[]string{"NAME", "ID"},
+		func(o wec.Offering) []string { return []string{o.Name, ui.Dim.Render(o.ID)} },
+		func(o wec.Offering) string { return o.ID })
+	return group("offering", "Kinds of VPC you can create", []string{"offerings"}, list)
 }
 
 func vpcArg(r *run) func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
@@ -162,12 +173,12 @@ func vpcGetCmd(r *run) *cobra.Command {
 
 func vpcCreateCmd(r *run) *cobra.Command {
 	var body wec.CreateVPC
-	var zone string
+	var zone, offering string
 	cmd := &cobra.Command{
-		Use:     "create --name <name> --zone <zone> --cidr <cidr> --offering <id>",
+		Use:     "create --name <name> --zone <zone> --cidr <cidr> --offering <offering>",
 		Aliases: []string{"new"},
 		Short:   "Create a VPC",
-		Example: "  gowec vpc create --name prod --zone princeton --cidr 10.1.0.0/16 --offering <vpc-offering-id>",
+		Example: "  gowec vpc create --name prod --zone princeton --cidr 10.1.0.0/16 --offering \"Default VPC offering\"",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			c, err := r.client()
@@ -175,6 +186,9 @@ func vpcCreateCmd(r *run) *cobra.Command {
 				return err
 			}
 			if body.ZoneID, err = c.ResolveZoneID(cmd.Context(), zone); err != nil {
+				return err
+			}
+			if body.VPCOfferingID, err = c.ResolveVPCOffering(cmd.Context(), offering); err != nil {
 				return err
 			}
 			accepted, err := c.CreateVPC(cmd.Context(), body, r.idempotencyKey())
@@ -189,11 +203,18 @@ func vpcCreateCmd(r *run) *cobra.Command {
 	f.StringVar(&body.Name, "name", "", "the VPC's name")
 	f.StringVar(&zone, "zone", "", "zone name or id (gowec zone list)")
 	f.StringVar(&body.CIDR, "cidr", "", "the VPC's address range, e.g. 10.1.0.0/16")
-	f.StringVar(&body.VPCOfferingID, "offering", "", "the VPC offering's id")
+	f.StringVar(&offering, "offering", "", "the kind of VPC, name or id (gowec vpc offering list)")
 	f.StringVar(&body.DisplayText, "description", "", "a description")
 	for _, name := range []string{"name", "zone", "offering"} {
 		_ = cmd.MarkFlagRequired(name)
 	}
+	_ = cmd.RegisterFlagCompletionFunc("offering", func(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+		c, err := r.client()
+		if err != nil {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		return r.app.cachedNames(r, "vpc-offering", offeringNames(c.ListVPCOfferings)), cobra.ShellCompDirectiveNoFileComp
+	})
 	return cmd
 }
 

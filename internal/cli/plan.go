@@ -3,7 +3,6 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
@@ -292,9 +291,9 @@ func planUpgradeCmd(r *run) *cobra.Command {
 			}
 			spin := ui.StartSpinner(r.app.Err, r.tty(), "Pricing…")
 			p, machine, err := machinePlan(cmd, c, args[0])
-			var price *wec.UpgradePrice
+			var price *wec.UpgradeQuote
 			if err == nil {
-				price, err = upgradePrice(cmd, c, p, term)
+				price, err = c.QuoteUpgrade(cmd.Context(), p.ID, term)
 			}
 			spin.Stop()
 			if err != nil {
@@ -338,28 +337,19 @@ func planUpgradeCmd(r *run) *cobra.Command {
 	return cmd
 }
 
-// upgradePrice prices plan p on a longer term from its size's quote.
-func upgradePrice(cmd *cobra.Command, c *wec.Client, p *wec.Plan, term int) (*wec.UpgradePrice, error) {
-	ledger, err := wec.LedgerOf(p)
-	if err != nil || ledger == nil {
-		return nil, errors.New("this plan's details can't be read; see gowec plan list")
-	}
-	quote, err := c.QuotePlan(cmd.Context(), ledger.ServiceOfferingID, int(math.Round(ledger.DiskGB)))
-	if err != nil {
-		return nil, err
-	}
-	return wec.PriceUpgrade(p, quote, term)
-}
-
-func upgradeSummary(machine string, u *wec.UpgradePrice) string {
+func upgradeSummary(machine string, u *wec.UpgradeQuote) string {
 	pairs := [][2]string{
 		{"VM", ui.Bold.Render(machine)},
-		{"Term", planMonths(u.FromMonths) + " → " + planMonths(u.TermMonths)},
+		{"Term", planMonths(u.OldTermMonths) + " → " + planMonths(u.TermMonths)},
 		{"New term", money(u.NewTotal, "")},
 		{"Credit", "-" + money(u.Credit, "") + ui.Dim.Render(fmt.Sprintf("  (%d days left of this term)", u.RemainingDays))},
 	}
-	if u.AddonsTotal > 0 {
-		pairs = append(pairs, [2]string{"Add-ons", money(u.AddonsTotal, "") + " - " + money(u.AddonsCredit, "") +
+	var addons, credit float64
+	for _, m := range u.AddonMoves {
+		addons, credit = addons+m.Total, credit+m.Credit
+	}
+	if addons > 0 {
+		pairs = append(pairs, [2]string{"Add-ons", money(addons, "") + " - " + money(credit, "") +
 			ui.Dim.Render("  (its add-on plans move to the new term)")})
 	}
 	pairs = append(pairs, [2]string{"Total", ui.Bold.Render(money(u.Due, ""))})
