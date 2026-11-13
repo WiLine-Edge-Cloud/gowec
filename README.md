@@ -37,14 +37,10 @@ On macOS or Linux:
 curl -fsSL https://github.com/WiLine-Edge-Cloud/gowec/releases/latest/download/install.sh | sh
 ```
 
-The script downloads the latest build for your system, checks it against the release's checksums, and asks where to install it:
+The script downloads the latest build for your system, checks it against the release's checksums, and installs it without asking anything:
 
-```
-Install gowec in [/usr/local/bin]:
-```
-
-- **Press Enter** for `/usr/local/bin`. It's already on your `PATH`, so `gowec` works straight away. On most Macs that folder needs administrator rights, so `sudo` asks for your password.
-- **Type another folder** to install without a password, such as `~/.local/bin`. If it isn't on your `PATH`, the script prints the line that adds it:
+- **Updating:** it replaces the `gowec` already on your `PATH`, wherever it is.
+- **First install:** it goes to `/usr/local/bin` when you can write there, else to `~/.local/bin`. On most Macs that's `~/.local/bin`, which isn't on the `PATH` yet; the script prints the line that adds it:
 
   ```bash
   echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
@@ -52,10 +48,10 @@ Install gowec in [/usr/local/bin]:
 
   With bash, use `~/.bashrc` instead of `~/.zshrc`.
 
-Then check it runs with `gowec version`.
+It never uses `sudo`. Then check it runs with `gowec version`.
 
 - **A specific version:** `curl -fsSL …/install.sh | GOWEC_VERSION=v0.1.0 sh`
-- **No question** (scripts and CI): `curl -fsSL …/install.sh | GOWEC_INSTALL_DIR=~/bin sh`. Without a terminal it doesn't ask: it uses `/usr/local/bin` when writable, else `~/.local/bin`.
+- **Another folder:** `curl -fsSL …/install.sh | GOWEC_INSTALL_DIR=~/bin sh`
 - **Windows:** download [gowec_windows_amd64.zip](https://github.com/WiLine-Edge-Cloud/gowec/releases/latest/download/gowec_windows_amd64.zip) and put `gowec.exe` on your `PATH`.
 - **From source,** with Go 1.27 or newer: `make build`, then put `bin/gowec` on your `PATH`.
 

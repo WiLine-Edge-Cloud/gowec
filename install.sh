@@ -3,11 +3,10 @@
 #
 #   curl -fsSL https://github.com/WiLine-Edge-Cloud/gowec/releases/latest/download/install.sh | sh
 #
-# It asks where to install (default /usr/local/bin, using sudo when that needs
-# administrator rights). GOWEC_INSTALL_DIR answers that ahead of time, and
-# GOWEC_VERSION=v0.1.0 installs that release instead of the latest one. With
-# no terminal (CI) it uses /usr/local/bin if writable, else ~/.local/bin.
-# Running it again updates gowec in place.
+# It updates the gowec already on your PATH where it is; a first install goes
+# to /usr/local/bin when writable, else ~/.local/bin. No questions, no sudo.
+# GOWEC_INSTALL_DIR picks another folder, and GOWEC_VERSION=v0.1.0 installs
+# that release instead of the latest one.
 set -eu
 
 BASE_URL="${GOWEC_BASE_URL:-https://github.com/WiLine-Edge-Cloud/gowec/releases}"
@@ -56,32 +55,21 @@ fi
 
 tar -xzf "$tmp/$archive" -C "$tmp" gowec
 
-default=/usr/local/bin
 dir="${GOWEC_INSTALL_DIR:-}"
 if [ -z "$dir" ]; then
-	# With curl | sh the script arrives on stdin, so the question goes to the terminal.
-	if { : </dev/tty; } 2>/dev/null; then
-		printf "Install gowec in [%s]: " "$default" >/dev/tty
-		read -r answer </dev/tty || answer=""
-		dir="${answer:-$default}"
-	elif [ -w "$default" ]; then
-		dir="$default"
+	current="$(command -v gowec 2>/dev/null || true)"
+	if [ -n "$current" ]; then
+		dir="$(dirname "$current")" # update the copy already in use, never add a second
+	elif [ -w /usr/local/bin ]; then
+		dir=/usr/local/bin
 	else
 		dir="$HOME/.local/bin"
 	fi
 fi
 case "$dir" in "~"*) dir="$HOME${dir#\~}" ;; esac
-
-# A folder you can't write to (like /usr/local/bin on most Macs) is written with sudo.
-sudo=""
-if ! { mkdir -p "$dir" && [ -w "$dir" ]; } 2>/dev/null; then
-	command -v sudo >/dev/null 2>&1 ||
-		fail "can't write to $dir; run again with GOWEC_INSTALL_DIR=\$HOME/.local/bin"
-	echo "Writing to $dir needs administrator rights; sudo may ask for your password."
-	sudo=sudo
-	$sudo mkdir -p "$dir"
-fi
-$sudo install -m 0755 "$tmp/gowec" "$dir/gowec"
+{ mkdir -p "$dir" && [ -w "$dir" ]; } 2>/dev/null ||
+	fail "can't write to $dir; run again with GOWEC_INSTALL_DIR=\$HOME/.local/bin, or with sudo"
+install -m 0755 "$tmp/gowec" "$dir/gowec"
 
 echo "Installed $("$dir/gowec" version) in $dir"
 case ":$PATH:" in
