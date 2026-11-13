@@ -59,3 +59,23 @@ func (c *Client) WaitLaunch(ctx context.Context, launchID string, onTick func(*L
 	})
 	return launch, err
 }
+
+// WaitOperation follows an operation until it succeeds or fails. One that
+// already finished in its request (no id) is returned as it is.
+func (c *Client) WaitOperation(ctx context.Context, op *Operation, onTick func(*Operation)) (*Operation, error) {
+	if op.OperationID == "" || op.Done() {
+		return op, nil
+	}
+	id := op.OperationID
+	err := poll(ctx, c, func() (bool, error) {
+		var err error
+		if op, err = c.GetOperation(ctx, id); err != nil {
+			return false, err
+		}
+		if onTick != nil {
+			onTick(op)
+		}
+		return op.Done(), nil
+	})
+	return op, err
+}

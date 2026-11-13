@@ -285,6 +285,37 @@ Renaming, restarting and deleting:
 - `vpc` also has `source-nat`, which changes the address outbound traffic leaves from.
 - A restart briefly interrupts traffic for every VM on that network or VPC.
 
+Site-to-site VPN: IPsec tunnels from a VPC to your offices' routers. An office is
+saved once and can connect to several VPCs.
+
+```bash
+gowec vpn get prod                          # our address and range, and each tunnel's state
+gowec vpn connect prod --name austin-dc --peer 52.10.20.7 --ranges 172.20.0.0/16
+                                            # turns the VPN on, saves the office, connects
+gowec vpn connect staging --office austin-dc
+gowec vpn reset prod austin-dc              # drop the tunnel and negotiate it again
+gowec vpn disconnect prod austin-dc
+gowec vpn settings prod austin-dc           # what their router needs; add --show-key for the key
+gowec vpn link prod staging                 # link two of your VPCs: both ends, one key nobody copies
+gowec vpn unlink prod staging               # both tunnels and both offices go
+gowec vpn disable prod
+gowec vpn office list                       # offices and the VPCs each connects to
+gowec vpn office create --name dallas --peer 52.10.20.33 --ranges 192.168.50.0/24
+gowec vpn office update austin-dc --ranges 172.20.0.0/16,172.22.0.0/16 --dpd
+gowec vpn office delete dallas
+```
+
+- The pre-shared key is asked for on a terminal, or read with `--psk-file <file>` (`-` for stdin).
+  It is never a flag value, so it stays out of shell history. Only `vpn settings` returns it: that
+  needs a key with `network:manage`, and every read is recorded in the account's events.
+- Defaults: IKEv2, `aes256-sha256;modp2048` for both phases, 86400 s and 3600 s lifetimes.
+  Change them with `--ike-version`, `--ike-policy`, `--esp-policy`, `--ike-lifetime` and `--esp-lifetime`.
+- `office update` changes only the flags you pass and restarts the office's tunnels on every VPC.
+- `--passive` waits for their side to start the tunnel; its state shows as Waiting until then.
+- `vpn link` needs both VPCs' VPN on and ranges that don't overlap. The second VPC waits and the first
+  dials out. A link shows in `vpn get` as the other VPC (`your VPC`); remove it with `vpn unlink`, not
+  `vpn disconnect`.
+
 ### Account
 
 ```bash

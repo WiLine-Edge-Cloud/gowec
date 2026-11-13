@@ -68,7 +68,7 @@ There is no Viper and no code generation.
   Never re-send automatically at a new price. Never turn a refused VM delete into a plan delete on the person's behalf.
 - **Output.** `-o json` / `-o yaml` print the API's objects unchanged. Tables are for people only. Spinners and banners draw only on a TTY.
 - **Passthrough shapes.** The wallet and plan shapes belong to the billing engine. `Plan` and `Wallet` keep `Raw` and marshal it back. Type only the fields a table shows.
-- **Backend endpoints.** A new endpoint the CLI needs goes into `cloudstack-integration` on `pre-paid` first. Only the prepaid line serves the public API.
+- **Backend endpoints.** Every branch line of `cloudstack-integration` serves the public API, so a new endpoint the CLI needs lands on `development` like any other change; only prepaid-only endpoints (`public/v1/prepaid.py`) go on `pre-paid`.
 
 ## Testing
 

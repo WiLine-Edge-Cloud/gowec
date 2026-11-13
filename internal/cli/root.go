@@ -75,7 +75,7 @@ func NewRoot(app *App) *cobra.Command {
 	)
 	for _, cmd := range []*cobra.Command{
 		machineCmd(r), volumeCmd(r), snapshotCmd(r), backupCmd(r),
-		networkCmd(r), vpcCmd(r), addressCmd(r), firewallCmd(r), sshKeyCmd(r),
+		networkCmd(r), vpcCmd(r), vpnCmd(r), addressCmd(r), firewallCmd(r), sshKeyCmd(r),
 		planCmd(r), walletCmd(r), ticketCmd(r),
 		zoneCmd(r), sizeCmd(r), templateCmd(r), diskCmd(r), priceCmd(r), bundleCmd(r),
 	} {
