@@ -36,18 +36,15 @@ func officeArg(r *run) func(*cobra.Command, []string, string) ([]string, cobra.S
 	})
 }
 
-// tunnelState colours a connection's state. A passive tunnel that is down is
-// waiting for their router to dial in, so it reads Waiting, as in the dashboard.
-func tunnelState(s string, passive bool) string {
+// tunnelState colours a connection's state. Passive doesn't change it: the
+// router dials out either way, so a passive tunnel that is down is down.
+func tunnelState(s string) string {
 	switch strings.ToLower(s) {
 	case "connected":
 		return ui.Green.Render(s)
 	case "error":
 		return ui.Red.Render(s)
 	case "disconnected":
-		if passive {
-			return ui.Dim.Render("Waiting")
-		}
 		return ui.Yellow.Render(s)
 	}
 	return ui.State(s)
@@ -102,7 +99,7 @@ func vpnTable(r *run, v *wec.VPC, vpn *wec.VPCVPN) string {
 	}
 	rows := make([][]string, len(vpn.Connections))
 	for i, x := range vpn.Connections {
-		state := tunnelState(x.State, x.Passive)
+		state := tunnelState(x.State)
 		if x.Passive {
 			state += "\n" + ui.Dim.Render("passive")
 		}
@@ -321,7 +318,7 @@ func vpnConnectCmd(r *run) *cobra.Command {
 	}
 	f := cmd.Flags()
 	f.StringVar(&office, "office", "", "a saved office, name or id (gowec vpn office list)")
-	f.BoolVar(&passive, "passive", false, "wait for their side to start the tunnel")
+	f.BoolVar(&passive, "passive", false, "start as Disconnected instead of Connecting; our router still dials out")
 	of.add(f)
 	_ = cmd.RegisterFlagCompletionFunc("office", func(c *cobra.Command, args []string, s string) ([]string, cobra.ShellCompDirective) {
 		return officeArg(r)(c, nil, s)
@@ -560,7 +557,7 @@ func officeListCmd(r *run) *cobra.Command {
 				ids[i] = o.ID
 				var vpcs []string
 				for _, x := range o.Connections {
-					vpcs = append(vpcs, dash(x.VPCName)+"  "+tunnelState(x.State, x.Passive))
+					vpcs = append(vpcs, dash(x.VPCName)+"  "+tunnelState(x.State))
 				}
 				where := ui.Dim.Render("Not connected")
 				if len(vpcs) > 0 {
@@ -613,7 +610,7 @@ func officeGetCmd(r *run) *cobra.Command {
 				{"Split connections", onOff(o.SplitConnections)},
 			}
 			for _, x := range o.Connections {
-				pairs = append(pairs, [2]string{"Connected to", dash(x.VPCName) + "  " + tunnelState(x.State, x.Passive)})
+				pairs = append(pairs, [2]string{"Connected to", dash(x.VPCName) + "  " + tunnelState(x.State)})
 			}
 			return r.show(o, []string{o.ID}, func() string { return ui.Pairs(pairs) })
 		},

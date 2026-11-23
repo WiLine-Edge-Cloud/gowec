@@ -307,7 +307,7 @@ gowec vpn office delete dallas
 - Defaults: IKEv2, `aes256-sha256;modp2048` for both phases, 86400 s and 3600 s lifetimes.
   Change them with `--ike-version`, `--ike-policy`, `--esp-policy`, `--ike-lifetime` and `--esp-lifetime`.
 - `office update` changes only the flags you pass and restarts the office's tunnels on every VPC.
-- `--passive` waits for their side to start the tunnel; its state shows as Waiting until then.
+- `--passive` only makes the connection start as Disconnected instead of Connecting. Our router still dials out.
 - `vpn link` needs both VPCs' VPN on and ranges that don't overlap. The second VPC waits and the first
   dials out. A link shows in `vpn get` as the other VPC (`your VPC`); remove it with `vpn unlink`, not
   `vpn disconnect`.
