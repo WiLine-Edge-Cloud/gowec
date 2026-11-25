@@ -60,6 +60,23 @@ func (c *Client) FindNetwork(ctx context.Context, network string) (*Network, err
 	return findRef(all, network, "network", func(n Network) (string, string) { return n.ID, n.Name })
 }
 
+// FindSubnet reads one of a VPC's (id) subnets by name or id. Subnet names
+// repeat across VPCs (each starts with a Default-Subnet), so this looks in
+// that VPC only.
+func (c *Client) FindSubnet(ctx context.Context, vpcID, subnet string) (*Network, error) {
+	all, err := c.ListNetworks(ctx, ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	var inVPC []Network
+	for _, n := range all {
+		if n.VPCID == vpcID {
+			inVPC = append(inVPC, n)
+		}
+	}
+	return findRef(inVPC, subnet, "subnet", func(n Network) (string, string) { return n.ID, n.Name })
+}
+
 // CreateNetwork creates a network or a VPC tier. It needs an idempotency key.
 func (c *Client) CreateNetwork(ctx context.Context, body CreateNetwork, idemKey string) (*JobAccepted, error) {
 	return c.machineAction(ctx, http.MethodPost, "/networks", nil, body, idemKey)
