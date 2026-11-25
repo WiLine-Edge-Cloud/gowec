@@ -227,8 +227,9 @@ func lbCreateCmd(r *run) *cobra.Command {
 		Aliases: []string{"new"},
 		Short:   "Create a load balancer on a new public address",
 		Long: "Create a load balancer on a new public address of the VPC. It sends each\n" +
-			"listener's public port to the machines on one subnet. The address is billed\n" +
-			"like any other public address; gowec asks first, and in scripts you pass --yes.\n\n" +
+			"listener's public port to the machines on one subnet. On postpaid the address\n" +
+			"is billed like any other; on prepaid it is free for now. gowec asks first, and\n" +
+			"in scripts you pass --yes.\n\n" +
 			listenerHelp,
 		Example: "  gowec lb create web --vpc prod --subnet front --listener 80:8080 --listener 443:8443 --vm web-1,web-2",
 		Args:    cobra.ExactArgs(1),
