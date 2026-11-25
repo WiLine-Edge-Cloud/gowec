@@ -79,8 +79,8 @@ type VPNRouterSettings struct {
 	IPsecPSK string            `json:"ipsec_psk,omitempty"`
 }
 
-// Operation is a multi-step action the server carries out (linking or
-// unlinking VPCs). Status is pending, running, succeeded or failed; an empty
+// Operation is a multi-step action the server carries out (linking VPCs,
+// load balancer changes). Status is pending, running, succeeded or failed; an empty
 // OperationID means it already finished inside the request.
 type Operation struct {
 	OperationID  string `json:"operation_id,omitempty"`
